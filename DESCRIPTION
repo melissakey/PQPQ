@@ -1,11 +1,11 @@
 Package: PQPQ
 Type: Package
-Title: What the Package Does (Title Case)
+Title: This is a port of Jenny Forshed's PQPQ package to R from Matlab.
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
+Author: Melissa Key
+Maintainer: Melissa Key <melkey@iu.edu>
+Description: protein quantification by peptide quality control    The PQPQ software improves the quantitative accuracy of mass spectrometry based on shotgun proteomics by selecting a subset of correlating peptides (or several such subsets of peptides) designed to best represent the quantitative profile of the protein.    This port specifically focuses on the peptide selection portion of this code; sections involved in reading and formatting the data are ignored (for now).
 License: What license is it under?
 Encoding: UTF-8
 LazyData: true
+Imports: Hmisc, plyr
