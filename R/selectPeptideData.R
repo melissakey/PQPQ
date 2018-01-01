@@ -2,6 +2,7 @@
 #'
 #' Select correlating peptides and subset them into clusters.
 #' @param X the input data - see details.
+#' @param data_matrix_name the name of the data matrix with the (normalized) peak intensities
 #' @param score_limit currently unused
 #' @param p_val the p-value associated with the significance of the correlation between 2 peptides
 #' @param dend_height the cut-off for clustering peptides by correlation distance.
@@ -9,7 +10,7 @@
 #'
 #'
 
-select_peptide_data <- function(X, score_limit, p_val, peptide_confidence_limit,
+select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide_confidence_limit,
   dend_height = 1) {
 
   ################################################
@@ -20,8 +21,11 @@ select_peptide_data <- function(X, score_limit, p_val, peptide_confidence_limit,
 
   result <- plyr::llply(X, with, {
     list_contents <- ls()
+    if(!(data_matrix_name %in% list_contents)) stop("'data_matrix_name' does not point to a valid matrix")
 
-    Nk <- ncol(data)
+    X_data <- get(data_matrix_name,inherits = FALSE)
+
+    Nk <- ncol(X_data)
 
     # create empty list to put warningings in
     protein_warnings <- vector("list", 5)
@@ -29,13 +33,13 @@ select_peptide_data <- function(X, score_limit, p_val, peptide_confidence_limit,
     # Do this once here, then pass the relevant results instead of recalculating it a
     # million times calculate correlation and associated p-values (p-value
     # calculation requires Hmisc package)
-    r_cor <- Hmisc::rcorr(data)
+    r_cor <- Hmisc::rcorr(X_data)
 
 
     # proteins supported by > 300 peptides select the 300 most confident peptides for
     # the actual protein
     if (Nk > 300) {
-      index <- order(conf,decreasing = TRUE)[1:300]
+      index <- order(confidence,decreasing = TRUE)[1:300]
       protein_warnings[[4]] <- "protein supported by > 300 peptides"
     } else {
       index <- 1:Nk
@@ -49,11 +53,11 @@ select_peptide_data <- function(X, score_limit, p_val, peptide_confidence_limit,
       within(index_pairs, {
         p <- r_cor$P[k[1], l]
         r2 <- r_cor$r[k[1], l]
-        conf_l <- Conf[l]
-        conf_k <- Conf[k]
+        conf_l <- confidence[l]
+        conf_k <- confidence[k]
         conf <- (conf_k >= peptide_confidence_limit) & (conf_l >= peptide_confidence_limit)
-        pep_l <- colnames(data[, l, drop = FALSE])
-        pep_k <- colnames(data[, k, drop = FALSE])
+        pep_l <- colnames(X_data[, l, drop = FALSE])
+        pep_k <- colnames(X_data[, k, drop = FALSE])
       })
     })
 
@@ -62,13 +66,13 @@ select_peptide_data <- function(X, score_limit, p_val, peptide_confidence_limit,
     index_selecting_proteins <- subset(correlation_data, p < p_val & r2 > 0 &
         conf, c(k, l))
     # if that didn't pick any up, relax the criteria on the p_value (not other criteria)
-    if (is.null(index_selecting_proteins)) {
+    if (nrow(index_selecting_proteins) == 0) {
       index_selecting_proteins <- subset(correlation_data, r2 > 0 & conf, c(k,
         l))
     }
     # if that doesn't work, throw up our hands and move on to the next protein.
     skip_rest <- FALSE
-    if (is.null(index_selecting_proteins)) {
+    if (nrow(index_selecting_proteins) == 0) {
       protein_warnings[[2]] <- "peptide conf too low to support protein ID or peptides don't correlate"
       skip_rest <- TRUE
     }
@@ -91,7 +95,7 @@ select_peptide_data <- function(X, score_limit, p_val, peptide_confidence_limit,
         })
       } else {
         # otherwise, just put everything in one class.
-        class_assignment <- data.frame(label = colnames(data), cluster = 1)
+        class_assignment <- data.frame(label = colnames(X_data), cluster = 1)
       }
 
       # sort classes by size.  this actually is important later!
@@ -102,7 +106,7 @@ select_peptide_data <- function(X, score_limit, p_val, peptide_confidence_limit,
       # select the model peptide with the highest intensity (from each class)
       model_peptides <- daply(class_assignment, .(cluster), function(class, data) {
         names(which.max(colMeans(data[, as.character(class$label), drop = FALSE])))
-      },data = data)
+      },data = X_data)
 
       indices_for_peptides_correlating_with_model_peptides <- plyr::llply(model_peptides,
         function(peptide) {
@@ -120,17 +124,20 @@ select_peptide_data <- function(X, score_limit, p_val, peptide_confidence_limit,
       # loop through each pair of clusters.  If the clusters share over 50% of peptides
       # using the # of peptides in the 1st cluster as a reference, then remove the
       # second cluster.
-      end_clusters <- plyr::llply(seq(2, length(correlating_peptides)), function(k) {
-        overlap_degree <- plyr::laply(seq(1, k - 1), function(l) {
-          n_joint_peptides <- length(intersect(correlating_peptides[[k]], correlating_peptides[[l]]))
-          n_peptides_in_k <- length(correlating_peptides[[k]])
-          n_joint_peptides/n_peptides_in_k * 100
+      if (length(correlating_peptides) > 1) {
+        end_clusters <- plyr::llply(seq(2, length(correlating_peptides)), function(k) {
+          overlap_degree <- plyr::laply(seq(1, k - 1), function(l) {
+            n_joint_peptides <- length(intersect(correlating_peptides[[k]], correlating_peptides[[l]]))
+            n_peptides_in_k <- length(correlating_peptides[[k]])
+            n_joint_peptides/n_peptides_in_k * 100
+          })
+          if (overlap_degree > 50)
+            NULL else k
         })
-        if (overlap_degree > 50)
-          NULL else k
-      })
-      end_clusters <- c(1, unlist(end_clusters))
-
+        end_clusters <- c(1, unlist(end_clusters))
+      } else {
+        end_clusters <- 1
+      }
       # create warning if more than one cluster is in the output.
       if(length(end_clusters) > 1) protein_warnings[[1]] <- 'non-overlapping peptide clusters'
 
@@ -142,7 +149,6 @@ select_peptide_data <- function(X, score_limit, p_val, peptide_confidence_limit,
       # attach the results to the original data contents.
       c(mget(list_contents),
         list(
-          data = data,
           correlating_peptides = correlating_peptides[end_clusters],
           model_peptides = model_peptides,
           warnings = protein_warnings
@@ -152,7 +158,6 @@ select_peptide_data <- function(X, score_limit, p_val, peptide_confidence_limit,
     else{
       c(mget(list_contents),
         list(
-          data = data,
           warnings = protein_warnings
         )
       )

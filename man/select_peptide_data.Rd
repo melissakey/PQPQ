@@ -4,8 +4,8 @@
 \alias{select_peptide_data}
 \title{select_peptide_data}
 \usage{
-select_peptide_data(X, score_limit, p_val, peptide_confidence_limit,
-  dend_height = 1)
+select_peptide_data(X, data_matrix_name, score_limit, p_val,
+  peptide_confidence_limit, dend_height = 1)
 }
 \arguments{
 \item{X}{the input data - see details.}
