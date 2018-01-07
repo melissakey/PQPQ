@@ -19,11 +19,12 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
   #  port to R by Melissa Key
   ################################################
 
-  result <- plyr::llply(X, with, {
-    list_contents <- ls()
-    if(!(data_matrix_name %in% list_contents)) stop("'data_matrix_name' does not point to a valid matrix")
+  result <- plyr::llply(X, function(protein) {
 
-    X_data <- get(data_matrix_name,inherits = FALSE)
+    if(!(data_matrix_name %in% names(protein))) stop("'data_matrix_name' does not point to a valid matrix")
+
+    X_data <- protein[[data_matrix_name]]
+    confidence <- protein$confidence
 
     Nk <- ncol(X_data)
 
@@ -147,7 +148,7 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
       if(max(peptide_cluster_count) > 1) protein_warnings[[5]] <- 'peptides assigned to more than one cluster (overlapping clusters)'
 
       # attach the results to the original data contents.
-      c(mget(list_contents),
+      c(protein,
         list(
           correlating_peptides = correlating_peptides[end_clusters],
           model_peptides = model_peptides,
