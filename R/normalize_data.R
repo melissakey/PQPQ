@@ -1,13 +1,24 @@
-normalize_data <- function(data, sample_names) {
+#' select_peptide_data
+#'
+#' Select correlating peptides and subset them into clusters.
+#' @param data a data frame .
+#' @param sample_names column identfiers or indices marking which columns to normalized
+#' @keywords proteomics
+#'
+#' @details This function peforms median-normalization on the requested columns of a data frame.
 
-  sample_medians <- apply(data,2,median,na.rm = TRUE)
+normalize_data <- function(data, sample_names) {
+  if(is.matrix(data)) data <- as.data.frame(data)
+
+  sample_medians <- apply(data[sample_names],2,median,na.rm = TRUE)
   mean_of_medians <- mean(sample_medians)
 
-  normalized_data <- plyr::llply(sample_names, function(sample_name) {
-    data[, sample_name] / sample_medians[sample_name] * mean_of_medians
+  normalized_data <- lapply(sample_names, function(sample_name) {
+    data[[sample_name]] / sample_medians[sample_name] * mean_of_medians
   })
-  data[, sample_names] <- normalized_data[, sample_names]
+  data[sample_names] <- normalized_data
 
+  data
   # colnames(normalized_data) <- paste0("normalized_",sample_names)
   # cbind(data,normalized_data)
 }
