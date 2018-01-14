@@ -3,7 +3,7 @@
 #' @description
 #' This function is used to prepare Protein Pilot data for analysis in PQPQ.
 #' @param df A data frame (see details)
-#' @param data_type one of "Protein Pilot", 'Spectrum Mill', or 'Proteome Discoverer', depending on the file origin.
+#' @param data_type one of 'Protein Pilot', 'Spectrum Mill', or 'Proteome Discoverer', depending on the file origin.
 #' @param protein_subset identifiers for the proteins to be analyzed.
 #' @param separate_multiple_protein_IDs If true, peptides assigned to multiple proteins are duplicated for each protein to which they are assigned.  Otherwise, they are analyzed as a group.
 #' @param column_ids A list of variables identifiers.
@@ -20,6 +20,7 @@
 #'}
 #' Note: this is only tested on the test output from Protein Pilot provided by Jenny Forshed in the PQPQ package, and entered into R using the \code{link{openxlsx}} package.  The formatting of data from other
 #'
+#' @export
 #' @return
 #' A list, containing the cleaned data.frame and the list of labeled variable names.
 #' @examples

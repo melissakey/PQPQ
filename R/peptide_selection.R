@@ -35,12 +35,12 @@ peptide_selection <- function(input_data, # data frame with input data
   # Combine replicates into a single data frame.
   #
   ######-------------------------------------------------------------------------
-  if (class(input_data) == "list") {
+  if (inherits(input_data,"list")) {
     replicates <- length(df_list)
-    df <- ldply(seq_along(df_list), function(i) {
+    df <- plyr::ldply(seq_along(df_list), function(i) {
       within(df_list[[i]], {replicate <- LETTERS[i]})
     })
-  } else if (class(input_data) == "data.frame") {
+  } else if (inherits(input_data,"data.frame")) {
     replicates <- 1
     df <- input_data
 
@@ -68,9 +68,9 @@ peptide_selection <- function(input_data, # data frame with input data
   # normalization - if requested (separately for each replicate).
   if (do_normalization) {
     if(replicates > 1)
-      df <- ddply(df, .(replicate), normalize_data, sample_names = column_identifiers$sample_names)
+      df <- plyr::ddply(df, .(replicate), normalize_data, sample_names = column_identifiers$sample_names)
     else
-      df <- normalize_data(df,column_identifiers$sample_names)
+      df <- normalize_data(df, column_identifiers$sample_names)
 
   }
 
@@ -84,9 +84,9 @@ peptide_selection <- function(input_data, # data frame with input data
   ######-------------------------------------------------------------------------
 
   # if (do_peptide_selection) {
-  peptide_selection_df <- df
+  # peptide_selection_df <- df
 
-  protein_list <- dlply(df, column_identifiers$protein_id, function(protein_df) {
+  protein_list <- plyr::dlply(df, column_identifiers$protein_id, function(protein_df) {
     dl <- list(
       df = protein_df,
       matrix_data = t(as.matrix(protein_df[column_identifiers$sample_names])),
@@ -102,7 +102,8 @@ peptide_selection <- function(input_data, # data frame with input data
     p_val =  p_val,
     peptide_confidence_limit = peptide_confidence_limit)
   # }
-
+  class(result) <- "pqpq"
+  result
 
 }
 

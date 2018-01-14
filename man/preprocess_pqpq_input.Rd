@@ -11,7 +11,7 @@ preprocess_pqpq_input(df, data_type = "Protein Pilot",
 \arguments{
 \item{df}{A data frame (see details)}
 
-\item{data_type}{one of "Protein Pilot", 'Spectrum Mill', or 'Proteome Discoverer', depending on the file origin.}
+\item{data_type}{one of 'Protein Pilot', 'Spectrum Mill', or 'Proteome Discoverer', depending on the file origin.}
 
 \item{protein_subset}{identifiers for the proteins to be analyzed.}
 

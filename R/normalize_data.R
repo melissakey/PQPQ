@@ -1,9 +1,8 @@
-#' select_peptide_data
+#' Normalize data (median method)
 #'
-#' Select correlating peptides and subset them into clusters.
+#' @description Normalize data by dividing by median and multiplying by mean of medians
 #' @param data a data frame .
 #' @param sample_names column identfiers or indices marking which columns to normalized
-#' @keywords proteomics
 #'
 #' @details This function peforms median-normalization on the requested columns of a data frame.
 

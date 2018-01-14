@@ -2,7 +2,7 @@
 % Please edit documentation in R/normalize_data.R
 \name{normalize_data}
 \alias{normalize_data}
-\title{select_peptide_data}
+\title{Normalize data (median method)}
 \usage{
 normalize_data(data, sample_names)
 }
@@ -12,9 +12,8 @@ normalize_data(data, sample_names)
 \item{sample_names}{column identfiers or indices marking which columns to normalized}
 }
 \description{
-Select correlating peptides and subset them into clusters.
+Normalize data by dividing by median and multiplying by mean of medians
 }
 \details{
 This function peforms median-normalization on the requested columns of a data frame.
 }
-\keyword{proteomics}

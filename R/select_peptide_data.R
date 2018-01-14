@@ -20,8 +20,6 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
   ################################################
 
   result <- plyr::llply(X, function(protein) {
-    protein <<- protein
-
     if(!(data_matrix_name %in% names(protein))) stop("'data_matrix_name' does not point to a valid matrix")
 
     confidence <- protein$confidence
@@ -88,19 +86,19 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
         hclust_obj <- hclust(d = as.dist(1 - r_cor$r[best_peptides, best_peptides]), method = "single")
 
         # cut dendorgram into clusters
-        class_assignment <- inconsistent(hclust_obj,cut_point = 1)$groups
+        class_assignment <- inconsistent(hclust_obj,cut_point = 1)$clusters
       } else {
         # otherwise, just put everything in one class.
-        class_assignment <- data.frame(label = colnames(protein[[data_matrix_name]])[best_peptides], group = 1)
+        class_assignment <- data.frame(label = colnames(protein[[data_matrix_name]])[best_peptides], cluster = 1)
       }
 
       # sort classes by size.  this actually is important later!
-      num_class_members <- with(class_assignment, tapply(group, group, length))
+      num_class_members <- with(class_assignment, tapply(cluster, cluster, length))
 
 
 
       # select the model peptide with the highest intensity (from each class)
-      model_peptides <- daply(class_assignment, .(group), function(class, data) {
+      model_peptides <- plyr::daply(class_assignment, plyr::.(cluster), function(class, data) {
         names(which.max(colMeans(data[, as.character(class$label), drop = FALSE])))
       },data = protein[[data_matrix_name]])
 

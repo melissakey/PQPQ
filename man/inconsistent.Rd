@@ -22,7 +22,7 @@ Calculates the inconsistency of a 'hclust' object and splits the data into clust
 }
 \details{
 This function calcualtes the inconsistency of a  \code{hclust} object.
-This provides the same functionality as the \code{inconsistent} function in Matlab and the 'scipy" library in Python.
+This provides the same functionality as the \code{inconsistent} function in Matlab and the 'scipy' library in Python.
 The inconsistency can be calculated as \deqn{\frac{h_{i} - \bar{h}}{s}} where \eqn{h_{i}} is the height of the given subtree;
 and \eqn{\bar{h}} and \eqn{s} are respectively the mean and standard deviation of the height of the subtree and any non-leaf subtrees.
 Note that the mean and standard deviationare calculated over 1, 2, or 3 heights depending on whether each subtree has 0, 1, or 2 non-leaf subtrees (with the resulting degenerecies).
