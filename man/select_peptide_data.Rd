@@ -5,7 +5,7 @@
 \title{select_peptide_data}
 \usage{
 select_peptide_data(X, data_matrix_name, score_limit, p_val,
-  peptide_confidence_limit, dend_height = 1)
+  peptide_confidence_limit, cut_point = 1)
 }
 \arguments{
 \item{X}{the input data - see details.}
@@ -16,9 +16,8 @@ select_peptide_data(X, data_matrix_name, score_limit, p_val,
 
 \item{p_val}{the p-value associated with the significance of the correlation between 2 peptides}
 
-\item{dend_height}{the cut-off for clustering peptides by correlation distance.}
+\item{cut_point}{the inconsistency cut-off for clustering peptides by correlation distance.}
 }
 \description{
 Select correlating peptides and subset them into clusters.
 }
-\keyword{proteomics}

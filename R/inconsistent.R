@@ -60,7 +60,7 @@ inconsistent <- function(hclust_obj,cut_point = NULL) {
     height_sd <- sqrt(rowVar(height_mat,na.rm = TRUE))
 
 
-    inconsistency <- ifelse(n_heights == 1 ,0, (height - height_mean) / height_sd)
+    inconsistency <- ifelse(n_heights == 1 | height_sd < 1e-8 ,0, (height - height_mean) / height_sd)
     rm(height_mat)
   })
   hclust_obj$inconsistency <- hclust_data$inconsistency
@@ -77,7 +77,7 @@ inconsistent <- function(hclust_obj,cut_point = NULL) {
           (hclust_data$obj_left > 0 && split[hclust_data$obj_left[i]])) {
         split[i] <- TRUE
       } else {
-        members <- find_nodes(hclust_data$obj_left,hclust_data$obj_right, i)
+        members <- PQPQ:::find_nodes(hclust_data$obj_left,hclust_data$obj_right, i)
         lowest_group <- min(groups$cluster[members])
         groups$cluster[members] <- min(groups$cluster[members])
       }

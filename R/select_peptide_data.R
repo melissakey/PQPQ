@@ -5,13 +5,12 @@
 #' @param data_matrix_name the name of the data matrix with the (normalized) peak intensities
 #' @param score_limit currently unused
 #' @param p_val the p-value associated with the significance of the correlation between 2 peptides
-#' @param dend_height the cut-off for clustering peptides by correlation distance.
-#' @keywords proteomics
+#' @param cut_point the inconsistency cut-off for clustering peptides by correlation distance.
 #'
 #'
 
 select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide_confidence_limit,
-  dend_height = 1) {
+  cut_point = 1) {
 
   ################################################
   #  R implementation of PQPQ
@@ -86,7 +85,7 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
         hclust_obj <- hclust(d = as.dist(1 - r_cor$r[best_peptides, best_peptides]), method = "single")
 
         # cut dendorgram into clusters
-        class_assignment <- inconsistent(hclust_obj,cut_point = 1)$clusters
+        class_assignment <- inconsistent(hclust_obj,cut_point = cut_point)$clusters
       } else {
         # otherwise, just put everything in one class.
         class_assignment <- data.frame(label = colnames(protein[[data_matrix_name]])[best_peptides], cluster = 1)
@@ -141,7 +140,7 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
       if(max(peptide_cluster_count) > 1) protein_warnings[[5]] <- 'peptides assigned to more than one cluster (overlapping clusters)'
 
       # attach the results to the original data contents.
-      c(protein,
+      result <- c(protein,
         list(
           correlating_peptides = correlating_peptides[end_clusters],
           model_peptides = model_peptides,
@@ -150,12 +149,14 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
       )
     }
     else{
-      c(protein,
+      result <- c(protein,
         list(
           warnings = protein_warnings
         )
       )
     }
+    class(result) <- 'pqpq'
+    result
   })
 
 
