@@ -42,6 +42,7 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
     } else {
       index <- 1:Nk
     }
+    if(Nk == 1) return(NULL)
 
 
     ##### select correlating peptides #####
@@ -85,7 +86,7 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
         hclust_obj <- hclust(d = as.dist(1 - r_cor$r[best_peptides, best_peptides]), method = "single")
 
         # cut dendorgram into clusters
-        class_assignment <- inconsistent(hclust_obj,cut_point = cut_point)$clusters
+        class_assignment <- inconsistent(hclust_obj, cut_point = cut_point)$clusters
       } else {
         # otherwise, just put everything in one class.
         class_assignment <- data.frame(label = colnames(protein[[data_matrix_name]])[best_peptides], cluster = 1)
@@ -124,7 +125,8 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
             n_peptides_in_k <- length(correlating_peptides[[k]])
             n_joint_peptides/n_peptides_in_k * 100
           })
-          if (overlap_degree > 50)
+
+          if (mean(overlap_degree) > 50)
             NULL else k
         })
         end_clusters <- c(1, unlist(end_clusters))

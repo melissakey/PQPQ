@@ -70,12 +70,12 @@ inconsistent <- function(hclust_obj,cut_point = NULL) {
     groups <- within(data.frame(label = hclust_obj$labels), {
       cluster <- 1:length(label)
     })
-    split <- rep(FALSE,n)
+    splits <- rep(FALSE,n)
     for (i in 1:n) {
-      if(hclust_data$inconsistency[i] > cut_point ||  # check inconsistency of current point AND each subtree
-          (hclust_data$obj_left > 0 && split[hclust_data$obj_left[i]]) ||
-          (hclust_data$obj_left > 0 && split[hclust_data$obj_left[i]])) {
-        split[i] <- TRUE
+      if(hclust_data$inconsistency[i] > cut_point |  # check inconsistency of current point AND each subtree
+          (hclust_data$obj_left[i] > 0 && splits[hclust_data$obj_left[i]]) |
+          (hclust_data$obj_right[i] > 0 && splits[hclust_data$obj_right[i]])) {
+        splits[i] <- TRUE
       } else {
         members <- PQPQ:::find_nodes(hclust_data$obj_left,hclust_data$obj_right, i)
         lowest_group <- min(groups$cluster[members])
