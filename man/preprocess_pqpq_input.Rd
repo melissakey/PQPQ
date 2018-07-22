@@ -6,7 +6,7 @@
 \usage{
 preprocess_pqpq_input(df, data_type = "Protein Pilot",
   protein_subset = NULL, separate_multiple_protein_IDs = FALSE,
-  column_ids = NULL)
+  sample_names = NULL, manually_annotated_fields = NULL)
 }
 \arguments{
 \item{df}{A data frame (see details)}
@@ -17,7 +17,9 @@ preprocess_pqpq_input(df, data_type = "Protein Pilot",
 
 \item{separate_multiple_protein_IDs}{If true, peptides assigned to multiple proteins are duplicated for each protein to which they are assigned.  Otherwise, they are analyzed as a group.}
 
-\item{column_ids}{A list of variables identifiers.}
+\item{sample_names}{A character vector identifying the columns holding sample data.}
+
+\item{manually_annotated_fields}{A list containing annotation data.}
 }
 \value{
 A list, containing the cleaned data.frame and the list of labeled variable names.
@@ -26,15 +28,6 @@ A list, containing the cleaned data.frame and the list of labeled variable names
 This function is used to prepare Protein Pilot data for analysis in PQPQ.
 }
 \details{
-This function handles most of the pre-processing done in the PQPQ function including:
-\itemize{
-\item{If \code{column_ids} is NULL, creates a list of which column names identifying the relevant portions of the data set (confidence, protein ID, peptide ID, and samples).
-This is subject to error depending on how the data was input into R and the data type.}
-\item{confirms that the specified columns are in the data set.}
-\item{removes peptides which do not meet PQPQ criterion. (in Protein Pilot, this includes proteins with annotation 'auto - shared MS/MS')}
-\item{if separate_multiple_proteins_IDs = TRUE, assigns peptides belonging to multiple proteins to ALL listed proteins separately, not the protein group.}
-\item{if a protein subset is given, filters out all other proteins.}
-}
 Note: this is only tested on the test output from Protein Pilot provided by Jenny Forshed in the PQPQ package, and entered into R using the \code{link{openxlsx}} package.  The formatting of data from other
 }
 \examples{
