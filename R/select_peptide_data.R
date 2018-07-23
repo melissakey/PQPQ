@@ -157,7 +157,7 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
         )
       )
     }
-    class(result) <- 'pqpq'
+    # class(result) <- 'pqpq'
     result
   })
 

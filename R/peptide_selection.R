@@ -36,9 +36,9 @@ peptide_selection <- function(input_data, # data frame with input data
   #
   ######-------------------------------------------------------------------------
   if (inherits(input_data,"list")) {
-    replicates <- length(df_list)
-    df <- plyr::ldply(seq_along(df_list), function(i) {
-      within(df_list[[i]], {replicate <- LETTERS[i]})
+    replicates <- length(input_data)
+    df <- plyr::ldply(seq_along(input_data), function(i) {
+      within(input_data[[i]], {replicate <- LETTERS[i]})
     })
   } else if (inherits(input_data,"data.frame")) {
     replicates <- 1
@@ -59,7 +59,7 @@ peptide_selection <- function(input_data, # data frame with input data
   ######-------------------------------------------------------------------------
 
   # remove low-quality peptides:
-  df[column_identifiers$sample_names] <- lapply(df[column_identifiers$sample_names], function(x, the_limit) {
+  df[names(df) %in% column_identifiers$sample_names] <- lapply(df[names(df) %in% column_identifiers$sample_names], function(x, the_limit) {
     x[x < the_limit] <- NA
     x
   }, the_limit = the_limit)
@@ -68,10 +68,9 @@ peptide_selection <- function(input_data, # data frame with input data
   # normalization - if requested (separately for each replicate).
   if (do_normalization) {
     if(replicates > 1)
-      df <- plyr::ddply(df, .(replicate), normalize_data, sample_names = column_identifiers$sample_names)
+      df <- plyr::ddply(df, plyr::`.`(replicate), normalize_data, sample_names = column_identifiers$sample_names[column_identifiers$sample_names %in% names(df)])
     else
-      df <- normalize_data(df, column_identifiers$sample_names)
-
+      df <- normalize_data(df, column_identifiers$sample_names[column_identifiers$sample_names %in% names(df)])
   }
 
   # replicates are already combined into a single data frame.
@@ -89,7 +88,7 @@ peptide_selection <- function(input_data, # data frame with input data
   protein_list <- plyr::dlply(df, column_identifiers$protein_id, function(protein_df) {
     dl <- list(
       df = protein_df,
-      matrix_data = t(as.matrix(protein_df[column_identifiers$sample_names])),
+      matrix_data = t(as.matrix(protein_df[names(df) %in% column_identifiers$sample_names])),
       confidence =protein_df[[column_identifiers$confidence]]
     )
     colnames(dl$matrix_data) <- names(dl$confidence) <- apply(protein_df[column_identifiers$peptide_ids],1,paste,collapse = "_")

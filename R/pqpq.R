@@ -29,7 +29,7 @@
 #' result <- pqpq(testdata2, sample_names = sample_names, data_type = "Manually annotated", manually_annotated_fields = column_ids)
 
 
-pqpq <- function(df,                    # data frame with input data
+pqpq <- function(data,                    # data frame with input data
   sample_names = NULL,
   protein_subset = NULL,
   data_type = c("Protein Pilot", "Spectrum Mill", "Proteome Discoverer", "Manually annotated"),
@@ -45,17 +45,48 @@ pqpq <- function(df,                    # data frame with input data
   action <- match.arg(action)
   data_type <- match.arg(data_type)
 
-  processed_data <- preprocess_pqpq_input(df,
-    data_type = data_type,
-    protein_subset = protein_subset,
-    separate_multiple_protein_IDs = separate_multiple_protein_IDs,
-    sample_names = sample_names,
-    manually_annotated_fields
-  )
+  if(inherits(data, "data.frame")){
+    processed_data <- preprocess_pqpq_input(data,
+      data_type = data_type,
+      protein_subset = protein_subset,
+      separate_multiple_protein_IDs = separate_multiple_protein_IDs,
+      sample_names = sample_names,
+      manually_annotated_fields
+    )
+  } else if(inherits(data, "list")) {
+    processed_data_list <- lapply(data, function(df) {
+      preprocess_pqpq_input(df,
+        data_type = data_type,
+        protein_subset = protein_subset,
+        separate_multiple_protein_IDs = separate_multiple_protein_IDs,
+        sample_names = sample_names,
+        manually_annotated_fields
+      )
+    })
+
+    sample_names_tmp <- lapply(processed_data_list, function(x) x$column_ids$sample_names)
+    if(length(unique(sample_names_tmp)) == 1) {
+      column_ids <- processed_data_list[[1]]$column_ids
+    } else {
+      column_ids <- unique(unlist(sample_names_tmp))
+    }
+
+
+    processed_data <- list(
+      data = lapply(processed_data_list, with, data),
+      column_ids = column_ids
+    )
+  }
 
   data_list <- with(processed_data, peptide_selection(data,
     column_ids, the_limit = peptide_sum_intensity_limit, p_val = correlation_p_value, peptide_confidence_limit = high_confidence_limit, do_normalization = normalize_data))
 
+  pqpq_warnings <- ldply(data_list, function(x) as.data.frame(x$warnings))
   output <- filter_peptides(data_list, processed_data$column_ids, action = action)
+  output <- list(
+    result = output,
+    warnings = pqpq_warnings
+  )
+  class(output) <- 'pqpq'
 }
 
