@@ -67,8 +67,12 @@ peptide_selection <- function(input_data, # data frame with input data
 
   # normalization - if requested (separately for each replicate).
   if (do_normalization) {
-    if(replicates > 1)
-      df <- plyr::ddply(df, plyr::`.`(replicate), normalize_data, sample_names = column_identifiers$sample_names[column_identifiers$sample_names %in% names(df)])
+    if(replicates > 1) {
+      df_list <- split(df, df$replicate)
+      df_list <- lapply(df_list, normalize_data, sample_names = column_identifiers$sample_names[column_identifiers$sample_names %in% names(df)])
+      df <- do.call("rbind", df_list)
+    }
+    # df <- plyr::ddply(df, plyr::`.`(replicate), normalize_data, sample_names = column_identifiers$sample_names[column_identifiers$sample_names %in% names(df)])
     else
       df <- normalize_data(df, column_identifiers$sample_names[column_identifiers$sample_names %in% names(df)])
   }
@@ -85,7 +89,8 @@ peptide_selection <- function(input_data, # data frame with input data
   # if (do_peptide_selection) {
   # peptide_selection_df <- df
 
-  protein_list <- plyr::dlply(df, column_identifiers$protein_id, function(protein_df) {
+  protein_list <- split(df, df[[column_identifiers$protein_id]])
+  protein_list <- lapply(protein_list, function(protein_df) {
     dl <- list(
       df = protein_df,
       matrix_data = t(as.matrix(protein_df[names(df) %in% column_identifiers$sample_names])),
@@ -94,6 +99,17 @@ peptide_selection <- function(input_data, # data frame with input data
     colnames(dl$matrix_data) <- names(dl$confidence) <- apply(protein_df[column_identifiers$peptide_ids],1,paste,collapse = "_")
     dl
   })
+
+  #
+  #   plyr::dlply(df, column_identifiers$protein_id, function(protein_df) {
+  #   dl <- list(
+  #     df = protein_df,
+  #     matrix_data = t(as.matrix(protein_df[names(df) %in% column_identifiers$sample_names])),
+  #     confidence =protein_df[[column_identifiers$confidence]]
+  #   )
+  #   colnames(dl$matrix_data) <- names(dl$confidence) <- apply(protein_df[column_identifiers$peptide_ids],1,paste,collapse = "_")
+  #   dl
+  # })
 
   result <- select_peptide_data(protein_list,
     data_matrix_name = "matrix_data",

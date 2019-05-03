@@ -18,7 +18,7 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
   #  port to R by Melissa Key
   ################################################
 
-  result <- plyr::llply(X, function(protein) {
+  result <- lapply(X, function(protein) {
     if(!(data_matrix_name %in% names(protein))) stop("'data_matrix_name' does not point to a valid matrix")
 
     confidence <- protein$confidence
@@ -46,7 +46,7 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
 
 
     ##### select correlating peptides #####
-    correlation_data <- plyr::ldply(seq(1, length(index) - 1), function(k) {
+    correlation_list <- lapply(seq(1, length(index) - 1), function(k) {
       index_pairs <- data.frame(k = index[k], l = index[-(1:k)])  # skipping protein/peptide IDs
 
       within(index_pairs, {
@@ -59,6 +59,20 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
         pep_k <- colnames(protein[[data_matrix_name]])[k]
       })
     })
+    correlation_data <- do.call("rbind", correlation_list)
+    # correlation_data <- plyr::ldply(seq(1, length(index) - 1), function(k) {
+    #   index_pairs <- data.frame(k = index[k], l = index[-(1:k)])  # skipping protein/peptide IDs
+    #
+    #   within(index_pairs, {
+    #     p <- r_cor$P[k[1], l]
+    #     r2 <- r_cor$r[k[1], l]
+    #     conf_l <- confidence[l]
+    #     conf_k <- confidence[k]
+    #     conf <- (conf_k >= peptide_confidence_limit) & (conf_l >= peptide_confidence_limit)
+    #     pep_l <- colnames(protein[[data_matrix_name]])[l]
+    #     pep_k <- colnames(protein[[data_matrix_name]])[k]
+    #   })
+    # })
 
     # Now we use subsetting of the above data to pick which pairs we actually want to use
     # first try: p-value < p_val and r2 > 0 and both confidences > peptide_confidence_limit
@@ -98,16 +112,21 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
 
 
       # select the model peptide with the highest intensity (from each class)
-      model_peptides <- plyr::daply(class_assignment, plyr::.(cluster), function(class, data) {
+      model_peptides_list <- split(class_assignment, class_assignment$cluster)
+      model_peptides <- sapply(model_peptides_list, function(class, data) {
         names(which.max(colMeans(data[, as.character(class$label), drop = FALSE])))
       },data = protein[[data_matrix_name]])
+
+      # model_peptides <- plyr::daply(class_assignment, plyr::.(cluster), function(class, data) {
+      #   names(which.max(colMeans(data[, as.character(class$label), drop = FALSE])))
+      # },data = protein[[data_matrix_name]])
 
       indices_for_peptides_correlating_with_model_peptides <- plyr::llply(model_peptides,
         function(peptide) {
           subset(correlation_data, (pep_k == peptide | pep_l == peptide) & p <
               p_val & r2 > 0)
         })
-      correlating_peptides <- plyr::llply(indices_for_peptides_correlating_with_model_peptides,
+      correlating_peptides <- lapply(indices_for_peptides_correlating_with_model_peptides,
         with, {
           unique(c(pep_k, pep_l))
         })
@@ -119,8 +138,8 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
       # using the # of peptides in the 1st cluster as a reference, then remove the
       # second cluster.
       if (length(correlating_peptides) > 1) {
-        end_clusters <- plyr::llply(seq(2, length(correlating_peptides)), function(k) {
-          overlap_degree <- plyr::laply(seq(1, k - 1), function(l) {
+        end_clusters <- lapply(seq(2, length(correlating_peptides)), function(k) {
+          overlap_degree <- sapply(seq(1, k - 1), function(l) {
             n_joint_peptides <- length(intersect(correlating_peptides[[k]], correlating_peptides[[l]]))
             n_peptides_in_k <- length(correlating_peptides[[k]])
             n_joint_peptides/n_peptides_in_k * 100

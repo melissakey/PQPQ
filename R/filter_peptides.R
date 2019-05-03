@@ -35,7 +35,7 @@ tmp3 <-   plyr::ldply(pqpq_obj,
         }
       } else {
         FILTER <- peptide_id %in% unique(unlist(x$correlating_peptides))
-        names(x$correlating_peptides) <- LETTERS[1:n_clusters]
+        names(x$correlating_peptides) <- get.letters(n_clusters)
         members <- lapply(x$correlating_peptides,
           function(cp, peptide_id) {
             peptide_id %in% cp

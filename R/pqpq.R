@@ -81,12 +81,14 @@ pqpq <- function(data,                    # data frame with input data
   data_list <- with(processed_data, peptide_selection(data,
     column_ids, the_limit = peptide_sum_intensity_limit, p_val = correlation_p_value, peptide_confidence_limit = high_confidence_limit, do_normalization = normalize_data))
 
-  pqpq_warnings <- ldply(data_list, function(x) as.data.frame(x$warnings))
+  pqpq_warnings <- sapply(data_list, function(x) sapply(x$warnings, function(y) {if(is.null(y)) NA else y}))
+  pqpq_warnings <- as.data.frame(t(pqpq_warnings))
   output <- filter_peptides(data_list, processed_data$column_ids, action = action)
   output <- list(
     result = output,
     warnings = pqpq_warnings
   )
   class(output) <- 'pqpq'
+  output
 }
 
