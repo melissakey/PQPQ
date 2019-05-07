@@ -31,6 +31,7 @@ select_peptide_data <- function(X, data_matrix_name, score_limit, p_val, peptide
     # Do this once here, then pass the relevant results instead of recalculating it a
     # million times calculate correlation and associated p-values (p-value
     # calculation requires Hmisc package)
+
     r_cor <- Hmisc::rcorr(protein[[data_matrix_name]])
 
 

@@ -13,7 +13,6 @@
 #' @param manually_annotated_fields If data_type is "Manually annotated", this is a list of the columns needed to complete the filtering: protein_id, confidence, and peptide_ids.  See examples
 #' @details
 #' This function performs the PQPQ process - including preprocessing, peptide_selection, and filtering.
-#' @export
 #' @return A data frame identifying which peptides are kept, and which proteoforms they are assigned to.
 #' @examples
 #' data("testdata2")
@@ -28,17 +27,62 @@
 #'
 #' result <- pqpq(testdata2, sample_names = sample_names, data_type = "Manually annotated", manually_annotated_fields = column_ids)
 
+#' @export
+pqpq <- function(x, ...) {
+  UseMethod("pqpq")
+}
 
-pqpq <- function(data,                    # data frame with input data
-  sample_names = NULL,
-  protein_subset = NULL,
-  data_type = c("Protein Pilot", "Spectrum Mill", "Proteome Discoverer", "Manually annotated"),
+#' @rdname pqpq
+#' @export
+pqpq.formula <- function(formula, data, subset, na.action,
+  correlation_p_value = 0.4,
+  high_confidence_limit = 95,
+  peptide_sum_intensity_limit = 0,
   normalize_data = TRUE,
+  separate_multiple_protein_IDs = FALSE,
+  action = c('mark', 'filter')
+) {
+  browser()
+
+
+  # obtain model frame
+  # code copied from stats::lm()
+  cl <- match.call()
+  mf <- match.call(expand.dots = FALSE)
+  m <- match(c("formula", "data", "subset", "na.action"), names(mf), 0L)
+
+
+  mf <- mf[c(1L, m)]
+  mf$drop.unused.levels <- TRUE
+  mf[[1L]] <- quote(stats::model.frame)
+  mf <- eval(mf, parent.frame())
+  rownames(mf) <- which()
+
+  y <- as.data.frame(model.response(mf),stringsAsFactors = FALSE)
+  if(ncol(y) != 2) stop("The response should consist of both the identified protein and confidence levels for each peptide")
+
+  y[[2]] <- as.numeric(y[[2]])
+
+  pqpq.default(mf[-1], y[[1]], y[[2]],
+    correlation_p_value = correlation_p_value,
+    high_confidence_limit = high_confidence_limit,
+    peptide_sum_intensity_limit = peptide_sum_intensity_limit,
+    normalize_data = normalize_data,
+    separate_multiple_protein_IDs = separate_multiple_protein_IDs
+  )
+}
+
+#' @rdname pqpq
+#' @export
+pqpq.default <- function(
+  x,
+  protein,
+  confidence,
+  normalize_data = FALSE,
   correlation_p_value = 0.4,
   high_confidence_limit = 95,
   peptide_sum_intensity_limit = 0,
   separate_multiple_protein_IDs = FALSE,
-  manually_annotated_fields = NULL,
   action = c('mark', 'filter')
 ) {
 
